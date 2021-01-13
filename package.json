@@ -1,0 +1,8 @@
+{
+  "name": "todomvc",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "examples/*"
+  ]
+}
