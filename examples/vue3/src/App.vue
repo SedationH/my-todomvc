@@ -16,6 +16,7 @@
         id="toggle-all"
         class="toggle-all"
         type="checkbox"
+        v-model="allDone"
       />
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
@@ -30,7 +31,11 @@
           :key="todo"
         >
           <div class="view">
-            <input class="toggle" type="checkbox" />
+            <input
+              class="toggle"
+              type="checkbox"
+              :checked="todo.completed"
+            />
             <label @dblclick="edit(todo)">
               {{ todo.text }}
             </label>
@@ -88,7 +93,7 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const useAdd = todos => {
   const input = ref('')
@@ -124,7 +129,6 @@ const useRemove = todos => {
  * 当编辑文本框为空并保存 删除该文本框
  * 显示编辑文本框的时候自动获得焦点
  */
-// eslint-disable-next-line no-unused-vars
 const useEdit = remove => {
   let beforeEditTodoText
   const editingTodo = ref(null)
@@ -159,6 +163,26 @@ const useEdit = remove => {
   }
 }
 
+/**
+ * 点击checkbox, 改变所有待办事项状态
+ * All Active Completed
+ *
+ * 显示未完成待办项的个数
+ * 移除所有完成的项目
+ * 如果没有待办项 隐藏main footer
+ */
+const useFilter = todos => {
+  const allDone = computed({
+    get: () => todos.value.every(todo => todo.completed),
+    set: value =>
+      todos.value.forEach(todo => (todo.completed = value))
+  })
+
+  return {
+    allDone
+  }
+}
+
 export default {
   setup() {
     const todos = ref([]),
@@ -167,7 +191,8 @@ export default {
       todos,
       remove,
       ...useAdd(todos),
-      ...useEdit(remove)
+      ...useEdit(remove),
+      ...useFilter(todos)
     }
   },
   directives: {
