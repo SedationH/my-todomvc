@@ -22,18 +22,30 @@
         <!-- These are here just to show the structure of the list items -->
         <!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
         <li
-          :class="{ completed: todo.completed }"
+          :class="{
+            completed: todo.completed,
+            editing: editingTodo === todo
+          }"
           v-for="todo in todos"
           :key="todo"
         >
           <div class="view">
             <input class="toggle" type="checkbox" />
-            <label>{{ todo.text }}</label>
-            <button class="destroy"></button>
+            <label @dblclick="edit(todo)">
+              {{ todo.text }}
+            </label>
+            <button
+              class="destroy"
+              @click="remove(todo)"
+            ></button>
           </div>
           <input
             class="edit"
-            value="Create a TodoMVC template"
+            v-model="todo.text"
+            @blur="save"
+            @keyup.enter="save"
+            @keyup.esc="cancel"
+            v-editing-focus="editingTodo === todo"
           />
         </li>
       </ul>
@@ -95,13 +107,72 @@ const useAdd = todos => {
   }
 }
 
+const useRemove = todos => {
+  const remove = todo => {
+    const index = todos.value.indexOf(todo)
+    todos.value.splice(index, 1)
+  }
+  return {
+    remove
+  }
+}
+
+/**
+ * 双击待办事项、展示编辑文本框
+ * enter || blur 修改数据
+ * esc 取消编辑
+ * 当编辑文本框为空并保存 删除该文本框
+ * 显示编辑文本框的时候自动获得焦点
+ */
+// eslint-disable-next-line no-unused-vars
+const useEdit = remove => {
+  let beforeEditTodoText
+  const editingTodo = ref(null)
+
+  const edit = todo => {
+    beforeEditTodoText = todo.text
+    editingTodo.value = todo
+  }
+
+  // 下面函数处理都依赖editingTodo & edit
+  const save = () => {
+    // if press enter when text is '',will invoke save twice,
+    // onKeyEnter and onBlur
+    if (editingTodo.value === null) return
+    editingTodo.value.text = editingTodo.value.text.trim()
+    if (editingTodo.value.text.length === 0) {
+      remove(editingTodo.value)
+    }
+    editingTodo.value = null
+  }
+
+  const cancel = () => {
+    editingTodo.value.text = beforeEditTodoText
+    editingTodo.value = null
+  }
+
+  return {
+    editingTodo,
+    edit,
+    save,
+    cancel
+  }
+}
+
 export default {
   setup() {
-    const todos = ref([])
+    const todos = ref([]),
+      { remove } = useRemove(todos)
     return {
       todos,
-      ...useAdd(todos)
+      remove,
+      ...useAdd(todos),
+      ...useEdit(remove)
     }
+  },
+  directives: {
+    editingFocus: (el, binding) =>
+      binding.value && el.focus()
   }
 }
 </script>
