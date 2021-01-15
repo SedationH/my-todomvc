@@ -6,6 +6,8 @@
         class="new-todo"
         placeholder="What needs to be done?"
         autofocus
+        v-model="input"
+        @keyup.enter="addTodo"
       />
     </header>
     <!-- This section should be hidden by default and shown when there are todos -->
@@ -19,24 +21,20 @@
       <ul class="todo-list">
         <!-- These are here just to show the structure of the list items -->
         <!-- List items should get the class `editing` when editing and `completed` when marked as completed -->
-        <li class="completed">
+        <li
+          :class="{ completed: todo.completed }"
+          v-for="todo in todos"
+          :key="todo"
+        >
           <div class="view">
-            <input class="toggle" type="checkbox" checked />
-            <label>Taste JavaScript</label>
+            <input class="toggle" type="checkbox" />
+            <label>{{ todo.text }}</label>
             <button class="destroy"></button>
           </div>
           <input
             class="edit"
             value="Create a TodoMVC template"
           />
-        </li>
-        <li>
-          <div class="view">
-            <input class="toggle" type="checkbox" />
-            <label>Buy a unicorn</label>
-            <button class="destroy"></button>
-          </div>
-          <input class="edit" value="Rule the web" />
         </li>
       </ul>
     </section>
@@ -76,3 +74,34 @@
     <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
   </footer>
 </template>
+
+<script>
+import { ref } from 'vue'
+
+const useAdd = todos => {
+  const input = ref('')
+  const addTodo = () => {
+    const text = input.value && input.value.trim()
+    if (text.length === 0) return
+    todos.value.unshift({
+      text,
+      completed: false
+    })
+    input.value = ''
+  }
+  return {
+    input,
+    addTodo
+  }
+}
+
+export default {
+  setup() {
+    const todos = ref([])
+    return {
+      todos,
+      ...useAdd(todos)
+    }
+  }
+}
+</script>
