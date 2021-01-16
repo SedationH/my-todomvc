@@ -11,7 +11,7 @@
       />
     </header>
     <!-- This section should be hidden by default and shown when there are todos -->
-    <section class="main">
+    <section class="main" v-if="allCount">
       <input
         id="toggle-all"
         class="toggle-all"
@@ -56,10 +56,12 @@
       </ul>
     </section>
     <!-- This footer should be hidden by default and shown when there are todos -->
-    <footer class="footer">
+    <footer class="footer" v-if="allCount">
       <!-- This should be `0 items left` by default -->
       <span class="todo-count"
-        ><strong>0</strong> item left</span
+        ><strong>{{ remainingCount }}</strong>
+        {{ remainingCount > 1 ? 'items' : 'item' }}
+        left</span
       >
       <!-- Remove this if you don't implement routing -->
       <ul class="filters">
@@ -84,7 +86,10 @@
         </li>
       </ul>
       <!-- Hidden if no completed items are left ↓ -->
-      <button class="clear-completed">
+      <button
+        class="clear-completed"
+        @click="clearCompleted"
+      >
         Clear completed
       </button>
     </footer>
@@ -127,8 +132,16 @@ const useRemove = todos => {
     const index = todos.value.indexOf(todo)
     todos.value.splice(index, 1)
   }
+
+  const clearCompleted = () => {
+    console.log(1)
+    todos.value = todos.value.filter(
+      todo => !todo.completed
+    )
+  }
   return {
-    remove
+    remove,
+    clearCompleted
   }
 }
 
@@ -208,6 +221,11 @@ const useFilter = todos => {
     type.value = hash
   }
 
+  const remainingCount = computed(
+    () => filter.active().length
+  )
+  const allCount = computed(() => todos.value.length)
+
   onMounted(() => {
     window.addEventListener('hashchange', onHashChange)
     onHashChange()
@@ -220,17 +238,20 @@ const useFilter = todos => {
   return {
     allDone,
     filteredTodos,
-    type
+    type,
+    remainingCount,
+    allCount
   }
 }
 
 export default {
   setup() {
     const todos = ref([]),
-      { remove } = useRemove(todos)
+      { remove, clearCompleted } = useRemove(todos)
     return {
       todos,
       remove,
+      clearCompleted,
       ...useAdd(todos),
       ...useEdit(remove),
       ...useFilter(todos)
