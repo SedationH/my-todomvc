@@ -27,14 +27,14 @@
             completed: todo.completed,
             editing: editingTodo === todo
           }"
-          v-for="todo in todos"
+          v-for="todo in filteredTodos"
           :key="todo"
         >
           <div class="view">
             <input
               class="toggle"
               type="checkbox"
-              :checked="todo.completed"
+              v-model="todo.completed"
             />
             <label @dblclick="edit(todo)">
               {{ todo.text }}
@@ -64,13 +64,23 @@
       <!-- Remove this if you don't implement routing -->
       <ul class="filters">
         <li>
-          <a class="selected" href="#/">All</a>
+          <a :class="{ selected: type === 'all' }" href="#/"
+            >All</a
+          >
         </li>
         <li>
-          <a href="#/active">Active</a>
+          <a
+            :class="{ selected: type === 'active' }"
+            href="#/active"
+            >Active</a
+          >
         </li>
         <li>
-          <a href="#/completed">Completed</a>
+          <a
+            :class="{ selected: type === 'completed' }"
+            href="#/completed"
+            >Completed</a
+          >
         </li>
       </ul>
       <!-- Hidden if no completed items are left ↓ -->
@@ -93,7 +103,7 @@
 </template>
 
 <script>
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const useAdd = todos => {
   const input = ref('')
@@ -178,8 +188,39 @@ const useFilter = todos => {
       todos.value.forEach(todo => (todo.completed = value))
   })
 
+  // eslint-disable-next-line no-unused-vars
+  const filter = {
+    all: () => todos.value,
+    active: () =>
+      todos.value.filter(todo => !todo.completed),
+    completed: () =>
+      todos.value.filter(todo => todo.completed)
+  }
+
+  const type = ref('all')
+  const filteredTodos = computed(() => filter[type.value]())
+
+  const onHashChange = () => {
+    let hash = window.location.hash.replace('#/', '')
+    if (hash !== 'active' && hash !== 'completed') {
+      hash = 'all'
+    }
+    type.value = hash
+  }
+
+  onMounted(() => {
+    window.addEventListener('hashchange', onHashChange)
+    onHashChange()
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('hashchange', onHashChange)
+  })
+
   return {
-    allDone
+    allDone,
+    filteredTodos,
+    type
   }
 }
 
