@@ -108,7 +108,16 @@
 </template>
 
 <script>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watchEffect
+} from 'vue'
+import useLocalStorage from './utils/useLocalStorage'
+
+const storage = useLocalStorage()
 
 const useAdd = todos => {
   const input = ref('')
@@ -244,10 +253,21 @@ const useFilter = todos => {
   }
 }
 
+// 本地储存
+const useToDoStorage = () => {
+  const KEY = 'TODOKEYS'
+  const todos = ref(storage.getItem(KEY) || [])
+  watchEffect(() => {
+    storage.setItem(KEY, todos.value)
+  })
+  return todos
+}
+
 export default {
   setup() {
-    const todos = ref([]),
+    const todos = useToDoStorage(),
       { remove, clearCompleted } = useRemove(todos)
+
     return {
       todos,
       remove,
